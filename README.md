@@ -1,37 +1,69 @@
-# Nyk Clothing 🌐👕
-### Secure E-Commerce Engine & Relational Database Node
-**Part of the CassAI Systems Architecture Framework**
+# Nyk Clothing
 
-Welcome to the official repository for **Nyk Clothing**. This platform is a modular clothing brand storefront designed to be fast, secure, and completely independent. 
+Node.js + Express API with a static storefront, PostgreSQL schema, Prisma ORM, and Stripe checkout.
 
----
+## What this repo contains
 
-## 🛠️ How It Works (The Setup)
+- `server.js` – API + static storefront host
+- `storefront/` – Frontend HTML/CSS/JS storefront
+- `routes/payments.js` – Stripe checkout session route
+- `prisma/schema.prisma` – Prisma data model
+- `init.sql` / `seed_products.sql` – database setup and seed data
+- `tests/` – API tests with Jest + Supertest
 
-To keep things simple and reliable for launch, the system is split into two parts:
+## Quick start
 
-1. **The Storefront:** The public website where customers can browse clothes, view collections, and make purchases.
-2. **The Database:** The private vault where all the inventory, clothing sizes, colors, and order records are securely stored.
+1. Install dependencies:
+   ```bash
+   npm ci
+   ```
+2. Copy env template and set real values:
+   ```bash
+   cp .env.example .env
+   ```
+3. Start PostgreSQL (Docker):
+   ```bash
+   docker compose up -d db
+   ```
+4. Start the app:
+   ```bash
+   npm start
+   ```
 
----
+## Environment variables
 
-## 🚀 The Plan for Nyk Clothing
+Required for core behavior:
 
-We are launching the brand in clear, manageable stages:
+- `DATABASE_URL`
+- `JWT_SECRET`
+- `CORS_ORIGINS`
 
-* **Phase 1: Zero-Friction Launch (Fasthosts Cloud)**
-  The website and the clothing database are hosted using secure, managed public servers (Fasthosts). This gets the store online immediately with zero maintenance hassle and 100% uptime for customers.
-  
-* **Phase 2: The Sovereign Hybrid Bridge**
-  The public storefront stays online so customers can access it fast from anywhere. However, we redirect the database connection securely back to our own local home server setup, keeping all customer data completely in our hands.
+Required for checkout route:
 
-* **Phase 3: The Local Cluster Farm**
-  Full integration into local edge computers to run inventory updates, automate local shipping/order tasks, and provide real-world technology training paths for community learners.
+- `STRIPE_SECRET_KEY`
+- `STRIPE_SUCCESS_URL`
+- `STRIPE_CANCEL_URL`
 
----
+## Scripts
 
-## 🔐 Inclusion & Community Purpose
+- `npm start` – run the server
+- `npm test` – run tests
+- `npm run lint` – run ESLint
 
-This business isn't just about selling clothes; it is an active training platform. By structuring our database and systems cleanly on GitHub, we can use Nyk Clothing to train care leavers, SEND individuals, and adult learners on how real-world data networks, coding environments, and digital businesses are built.
+## API endpoints
 
-**Built with Precision. Working for the Community.**
+- `GET /api/health`
+- `GET /api/products?page=1&limit=20`
+- `POST /api/payments/create-checkout-session`
+
+Checkout payload example shape:
+
+```json
+{
+  "items": [
+    { "product_variant_id": 1, "quantity": 2 }
+  ]
+}
+```
+
+Prices are sourced server-side from the database and are not accepted from the client payload.

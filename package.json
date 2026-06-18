@@ -5,10 +5,11 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "test": "jest"
+    "test": "jest",
+    "lint": "eslint ."
   },
   "dependencies": {
-    "@prisma/client": "^7.8.0",
+    "@prisma/client": "^6.19.3",
     "compression": "^1.8.1",
     "cors": "^2.8.6",
     "dotenv": "^16.4.5",
@@ -22,6 +23,7 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "eslint": "^8.57.1",
     "jest": "^30.4.2",
     "prisma": "^6.19.3",
     "supertest": "^7.2.2"

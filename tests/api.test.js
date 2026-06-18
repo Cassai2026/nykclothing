@@ -1,16 +1,20 @@
 const request = require('supertest');
-const express = require('express');
+const app = require('../server');
 
-// Setting up a dummy version of our API specifically for the robot to test
-const app = express();
-app.get('/api/health', (req, res) => res.status(200).json({ status: 'Vault is secure and operational' }));
-
-describe('Nyk Clothing Automated Bot', () => {
-  it('Should successfully connect to the server and get a 200 OK status', async () => {
+describe('Nyk Clothing API', () => {
+  it('returns healthy status', async () => {
     const res = await request(app).get('/api/health');
-    
-    // The Robot's Checklist:
+
     expect(res.statusCode).toEqual(200);
     expect(res.body.status).toEqual('Vault is secure and operational');
+  });
+
+  it('rejects invalid checkout payload', async () => {
+    const res = await request(app)
+      .post('/api/payments/create-checkout-session')
+      .send({ items: [{ product_variant_id: -1, quantity: 0 }] });
+
+    expect(res.statusCode).toEqual(400);
+    expect(res.body.error).toEqual('Invalid data format');
   });
 });
