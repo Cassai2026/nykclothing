@@ -1,28 +1,34 @@
 const express = require('express');
-const { Pool } = require('pg');
+const { PrismaClient } = require('@prisma/client');
 require('dotenv').config();
 
 const app = express();
+const prisma = new PrismaClient();
 const port = process.env.PORT || 3000;
 
-const pool = new Pool({
-  host: process.env.DB_HOST,
-  port: process.env.DB_PORT,
-  database: process.env.DB_NAME,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-});
+app.use(express.json());
 
+// API: Get all active products with their variants and real-time inventory
 app.get('/api/products', async (req, res) => {
   try {
-    const result = await pool.query('SELECT * FROM products WHERE is_active = true');
-    res.json(result.rows);
+    const products = await prisma.products.findMany({
+      where: { is_active: true },
+      include: {
+        product_variants: {
+          where: { is_active: true },
+          include: {
+            inventory: true
+          }
+        }
+      }
+    });
+    res.json(products);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Database query failed' });
+    console.error('Prisma Error:', err);
+    res.status(500).json({ error: 'Failed to fetch catalog' });
   }
 });
 
 app.listen(port, () => {
-  console.log(\Server running on port \\);
+  console.log(\Supercharged server running on port \\);
 });

@@ -1,13 +1,39 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
-  provider = "prisma-client"
-  output   = "../generated/prisma"
+  provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model products {
+  product_id          Int                @id @default(autoincrement())
+  product_name        String             @db.VarChar(255)
+  product_description String?
+  is_active           Boolean            @default(true)
+  created_at          DateTime           @default(now())
+  product_variants    product_variants[]
+}
+
+model product_variants {
+  product_variant_id Int        @id @default(autoincrement())
+  product_id         Int
+  sku                String     @unique @db.VarChar(100)
+  size_label         String     @db.VarChar(50)
+  color_name         String     @db.VarChar(100)
+  price_cents        Int
+  is_active          Boolean    @default(true)
+  created_at         DateTime   @default(now())
+  products           products   @relation(fields: [product_id], references: [product_id], onDelete: Cascade)
+  inventory          inventory?
+}
+
+model inventory {
+  inventory_id       Int              @id @default(autoincrement())
+  product_variant_id Int              @unique
+  quantity_on_hand   Int              @default(0)
+  quantity_reserved  Int              @default(0)
+  last_updated       DateTime         @default(now())
+  product_variants   product_variants @relation(fields: [product_variant_id], references: [product_variant_id], onDelete: Cascade)
 }
