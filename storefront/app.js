@@ -1,7 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
     const productGrid = document.getElementById('product-grid');
     // The address of your local backend API
-    const API_URL = 'http://localhost:3000/api/products';
+    const API_URL = '/api/products';
 
     async function loadProducts() {
         try {

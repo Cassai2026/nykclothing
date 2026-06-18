@@ -3,8 +3,9 @@ const helmet = require('helmet');
 const cors = require('cors');
 const rateLimit = require('express-rate-limit');
 const compression = require('compression');
+const path = require('path');
 const { PrismaClient } = require('@prisma/client');
-const paymentRoutes = require('./routes/payments'); // The Money Router
+const paymentRoutes = require('./routes/payments'); 
 require('dotenv').config();
 
 const app = express();
@@ -12,10 +13,16 @@ const prisma = new PrismaClient();
 const port = process.env.PORT || 3000;
 
 // --- SECURITY & SPEED GUARDS ---
-app.use(helmet()); 
-app.use(cors({ origin: 'https://nykclothing.com' })); 
+app.use(helmet({
+  contentSecurityPolicy: false, // Allows our frontend CDN to load Tailwind smoothly
+})); 
+app.use(cors()); 
 app.use(compression()); 
 app.use(express.json());
+
+// --- SERVE FRONTEND STOREFRONT ---
+// This line automatically serves your index.html when someone visits the main domain
+app.use(express.static(path.join(__dirname, 'storefront')));
 
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, 
@@ -25,7 +32,9 @@ const apiLimiter = rateLimit({
 app.use('/api/', apiLimiter);
 
 // --- ROUTES ---
-app.use('/api/payments', paymentRoutes); // Route all money stuff to the Stripe file
+app.use('/api/payments', paymentRoutes); 
+
+app.get('/api/health', (req, res) => res.status(200).json({ status: 'Vault is secure and operational' }));
 
 app.get('/api/products', async (req, res) => {
   try {
