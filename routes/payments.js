@@ -1,16 +1,15 @@
 const express = require('express');
 const router = express.Router();
 const Stripe = require('stripe');
+const { validateData, checkoutSchema } = require('../middleware/validate');
 
-// We will add the real secret key to .env later, using a dummy one for the blueprint
 const stripe = Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_placeholder');
 
-// Generate a secure checkout link
-router.post('/create-checkout-session', async (req, res) => {
+// Notice the validateData(checkoutSchema) sitting right in the middle!
+router.post('/create-checkout-session', validateData(checkoutSchema), async (req, res) => {
   try {
-    const { items } = req.body; // What the customer is buying
+    const { items } = req.body; 
 
-    // Tell Stripe what to charge them
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       mode: 'payment',
