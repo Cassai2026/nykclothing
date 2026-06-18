@@ -1,39 +1,71 @@
-generator client {
-  provider = "prisma-client-js"
-}
-
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
-model products {
-  product_id          Int                @id @default(autoincrement())
-  product_name        String             @db.VarChar(255)
+generator client {
+  provider = "prisma-client-js"
+}
+
+// --- USER & AUTH REALM ---
+model Users {
+  user_id       String         @id @default(uuid())
+  email         String         @unique
+  password_hash String
+  role          String         @default("customer") // customer, admin, factory_partner
+  created_at    DateTime       @default(now())
+  body_profile  BodyProfiles?
+  digital_closet DigitalTwins[]
+}
+
+// AI Biometric Dimensions (Phase 1)
+model BodyProfiles {
+  profile_id   String   @id @default(uuid())
+  user_id      String   @unique
+  user         Users    @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
+  height_cm    Float
+  chest_cm     Float
+  waist_cm     Float
+  hips_cm      Float
+  updated_at   DateTime @updatedAt
+}
+
+// --- E-COMMERCE CORE ---
+model Products {
+  product_id          String            @id @default(uuid())
+  product_name        String
   product_description String?
-  is_active           Boolean            @default(true)
-  created_at          DateTime           @default(now())
-  product_variants    product_variants[]
+  is_active           Boolean           @default(true)
+  created_at          DateTime          @default(now())
+  product_variants    ProductVariants[]
 }
 
-model product_variants {
-  product_variant_id Int        @id @default(autoincrement())
-  product_id         Int
-  sku                String     @unique @db.VarChar(100)
-  size_label         String     @db.VarChar(50)
-  color_name         String     @db.VarChar(100)
-  price_cents        Int
-  is_active          Boolean    @default(true)
-  created_at         DateTime   @default(now())
-  products           products   @relation(fields: [product_id], references: [product_id], onDelete: Cascade)
-  inventory          inventory?
+model ProductVariants {
+  variant_id String     @id @default(uuid())
+  product_id String
+  product    Products   @relation(fields: [product_id], references: [product_id], onDelete: Cascade)
+  size       String // S, M, L, XL, Custom
+  color      String
+  price_cents Int
+  is_active  Boolean    @default(true)
+  inventory  Inventory?
 }
 
-model inventory {
-  inventory_id       Int              @id @default(autoincrement())
-  product_variant_id Int              @unique
-  quantity_on_hand   Int              @default(0)
-  quantity_reserved  Int              @default(0)
-  last_updated       DateTime         @default(now())
-  product_variants   product_variants @relation(fields: [product_variant_id], references: [product_variant_id], onDelete: Cascade)
+model Inventory {
+  inventory_id String          @id @default(uuid())
+  variant_id   String          @unique
+  variant      ProductVariants @relation(fields: [variant_id], references: [variant_id], onDelete: Cascade)
+  quantity     Int             @default(0)
+  updated_at   DateTime        @updatedAt
+}
+
+// --- THE CIRCULAR ENGINE (Phase 2) ---
+model DigitalTwins {
+  twin_id        String   @id @default(uuid())
+  user_id        String
+  owner          Users    @relation(fields: [user_id], references: [user_id])
+  variant_name   String
+  nfc_secure_tag String   @unique // Encrypted identifier sewn into physical hem
+  garment_status String   @default("active") // active, listed_resale, returned, shredded
+  minted_at      DateTime @default(now())
 }
