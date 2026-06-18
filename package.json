@@ -1,0 +1,1 @@
+{\n  "name": "nyk-clothing-backend",\n  "version": "1.0.0",\n  "description": "Production database and API engine for Nyk Clothing",\n  "main": "server.js",\n  "scripts": {\n    "start": "node server.js"\n  },\n  "dependencies": {\n    "dotenv": "^16.4.5",\n    "express": "^4.19.2",\n    "pg": "^8.11.5"\n  }\n}
