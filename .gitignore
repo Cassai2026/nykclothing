@@ -19,3 +19,6 @@ pgdata/
 
 # Node modules
 node_modules/
+
+# Server Logs
+logs/
