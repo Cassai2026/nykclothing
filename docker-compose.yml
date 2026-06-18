@@ -6,7 +6,7 @@ services:
     container_name: nyk_clothing_db
     environment:
       POSTGRES_USER: nyk_admin
-      POSTGRES_PASSWORD: NykSecurePassword2026
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change_me}
       POSTGRES_DB: nyk_store
     ports:
       - "5432:5432"

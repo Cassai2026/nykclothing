@@ -1,27 +1,30 @@
 const jwt = require('jsonwebtoken');
 
-// Bouncer 1: Check if they have a valid wristband (JWT)
 const verifyToken = (req, res, next) => {
-  const token = req.headers['authorization'];
-  if (!token) return res.status(403).json({ error: 'No wristband. Access denied.' });
+  const token = req.headers.authorization;
+  if (!token) {
+    return res.status(403).json({ error: 'No token provided. Access denied.' });
+  }
+
+  if (!process.env.JWT_SECRET) {
+    return res.status(500).json({ error: 'Auth secret is not configured.' });
+  }
 
   try {
     const cleanToken = token.startsWith('Bearer ') ? token.slice(7) : token;
-    const decoded = jwt.verify(cleanToken, process.env.JWT_SECRET || 'fallback_secret');
+    const decoded = jwt.verify(cleanToken, process.env.JWT_SECRET);
     req.user = decoded;
-    next();
+    return next();
   } catch (err) {
-    return res.status(401).json({ error: 'Fake or expired wristband.' });
+    return res.status(401).json({ error: 'Invalid or expired token.' });
   }
 };
 
-// Bouncer 2: VIP list (Role-Based Access Control)
 const requireAdmin = (req, res, next) => {
   if (req.user && req.user.role === 'admin') {
-    next();
-  } else {
-    res.status(403).json({ error: 'VIPs only. Admin access required.' });
+    return next();
   }
+  return res.status(403).json({ error: 'Admin access required.' });
 };
 
 module.exports = { verifyToken, requireAdmin };
