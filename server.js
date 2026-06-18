@@ -4,6 +4,7 @@ const cors = require('cors');
 const rateLimit = require('express-rate-limit');
 const compression = require('compression');
 const { PrismaClient } = require('@prisma/client');
+const paymentRoutes = require('./routes/payments'); // The Money Router
 require('dotenv').config();
 
 const app = express();
@@ -13,7 +14,7 @@ const port = process.env.PORT || 3000;
 // --- SECURITY & SPEED GUARDS ---
 app.use(helmet()); 
 app.use(cors({ origin: 'https://nykclothing.com' })); 
-app.use(compression()); // Shrinks data for faster loading
+app.use(compression()); 
 app.use(express.json());
 
 const apiLimiter = rateLimit({
@@ -24,10 +25,10 @@ const apiLimiter = rateLimit({
 app.use('/api/', apiLimiter);
 
 // --- ROUTES ---
-// Public Route: Get all active products (Now with Pagination!)
+app.use('/api/payments', paymentRoutes); // Route all money stuff to the Stripe file
+
 app.get('/api/products', async (req, res) => {
   try {
-    // Pagination math
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 20;
     const skip = (page - 1) * limit;
@@ -49,11 +50,7 @@ app.get('/api/products', async (req, res) => {
 
     res.json({
       data: products,
-      meta: {
-        totalItems,
-        currentPage: page,
-        totalPages: Math.ceil(totalItems / limit)
-      }
+      meta: { totalItems, currentPage: page, totalPages: Math.ceil(totalItems / limit) }
     });
   } catch (err) {
     console.error('Prisma Error:', err);
