@@ -1,0 +1,16 @@
+# Windows system files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Local data directories
+.data/
+pgdata/
+
+# IDE / Editor configuration folders
+.vscode/
+.idea/
+
+# Environment files containing passwords
+.env
+*.local
