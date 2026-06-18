@@ -2,6 +2,7 @@ const express = require('express');
 const helmet = require('helmet');
 const cors = require('cors');
 const rateLimit = require('express-rate-limit');
+const compression = require('compression');
 const { PrismaClient } = require('@prisma/client');
 require('dotenv').config();
 
@@ -9,33 +10,51 @@ const app = express();
 const prisma = new PrismaClient();
 const port = process.env.PORT || 3000;
 
-// --- SECURITY GUARDS ---
+// --- SECURITY & SPEED GUARDS ---
 app.use(helmet()); 
 app.use(cors({ origin: 'https://nykclothing.com' })); 
+app.use(compression()); // Shrinks data for faster loading
 app.use(express.json());
 
-// Stop bots from spamming our API
 const apiLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // Limit each IP to 100 requests per window
+  windowMs: 15 * 60 * 1000, 
+  max: 100, 
   message: 'Too many requests from this IP. Chill out and try again in 15 mins.'
 });
 app.use('/api/', apiLimiter);
 
 // --- ROUTES ---
-// Public Route: Get all active products
+// Public Route: Get all active products (Now with Pagination!)
 app.get('/api/products', async (req, res) => {
   try {
-    const products = await prisma.products.findMany({
-      where: { is_active: true },
-      include: {
-        product_variants: {
-          where: { is_active: true },
-          include: { inventory: true }
+    // Pagination math
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20;
+    const skip = (page - 1) * limit;
+
+    const [products, totalItems] = await prisma.\([
+      prisma.products.findMany({
+        where: { is_active: true },
+        skip: skip,
+        take: limit,
+        include: {
+          product_variants: {
+            where: { is_active: true },
+            include: { inventory: true }
+          }
         }
+      }),
+      prisma.products.count({ where: { is_active: true } })
+    ]);
+
+    res.json({
+      data: products,
+      meta: {
+        totalItems,
+        currentPage: page,
+        totalPages: Math.ceil(totalItems / limit)
       }
     });
-    res.json(products);
   } catch (err) {
     console.error('Prisma Error:', err);
     res.status(500).json({ error: 'Failed to fetch catalog' });
@@ -43,5 +62,5 @@ app.get('/api/products', async (req, res) => {
 });
 
 app.listen(port, () => {
-  console.log(\Vault locked. Supercharged server running on port \\);
+  console.log(\Vault locked. High-speed server running on port \\);
 });
