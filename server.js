@@ -10,8 +10,8 @@ const prisma = new PrismaClient();
 const port = process.env.PORT || 3000;
 
 // --- SECURITY GUARDS ---
-app.use(helmet()); // Hides server info and stops malicious scripts
-app.use(cors({ origin: 'https://nykclothing.com' })); // Only allow our actual website to talk to this API
+app.use(helmet()); 
+app.use(cors({ origin: 'https://nykclothing.com' })); 
 app.use(express.json());
 
 // Stop bots from spamming our API

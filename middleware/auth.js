@@ -6,10 +6,9 @@ const verifyToken = (req, res, next) => {
   if (!token) return res.status(403).json({ error: 'No wristband. Access denied.' });
 
   try {
-    // Clean the token format
     const cleanToken = token.startsWith('Bearer ') ? token.slice(7) : token;
     const decoded = jwt.verify(cleanToken, process.env.JWT_SECRET || 'fallback_secret');
-    req.user = decoded; // Attach user info to the request
+    req.user = decoded;
     next();
   } catch (err) {
     return res.status(401).json({ error: 'Fake or expired wristband.' });
