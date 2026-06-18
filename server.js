@@ -98,7 +98,7 @@ app.get('/api/products', async (req, res) => {
   }
 });
 
-app.use((err, req, res, next) => {
+app.use((err, req, res, _next) => {
   if (err && err.message === 'Origin not allowed by CORS') {
     return res.status(403).json({ error: 'Origin not allowed' });
   }

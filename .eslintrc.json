@@ -8,7 +8,21 @@
     "ecmaVersion": "latest"
   },
   "rules": {
-    "no-unused-vars": "warn",
+    "no-unused-vars": ["warn", { "argsIgnorePattern": "^_" }],
     "no-console": "off"
-  }
+  },
+  "overrides": [
+    {
+      "files": ["storefront/**/*.js"],
+      "env": {
+        "browser": true
+      }
+    },
+    {
+      "files": ["tests/**/*.js"],
+      "env": {
+        "jest": true
+      }
+    }
+  ]
 }
