@@ -7,18 +7,16 @@ generator client {
   provider = "prisma-client-js"
 }
 
-// --- USER & AUTH REALM ---
 model Users {
   user_id       String         @id @default(uuid())
   email         String         @unique
   password_hash String
-  role          String         @default("customer") // customer, admin, factory_partner
+  role          String         @default("customer") // customer, exclusive_vip, admin
   created_at    DateTime       @default(now())
   body_profile  BodyProfiles?
   digital_closet DigitalTwins[]
 }
 
-// AI Biometric Dimensions (Phase 1)
 model BodyProfiles {
   profile_id   String   @id @default(uuid())
   user_id      String   @unique
@@ -30,11 +28,11 @@ model BodyProfiles {
   updated_at   DateTime @updatedAt
 }
 
-// --- E-COMMERCE CORE ---
 model Products {
   product_id          String            @id @default(uuid())
   product_name        String
   product_description String?
+  access_tier         String            @default("standard") // standard, exclusive_vip
   is_active           Boolean           @default(true)
   created_at          DateTime          @default(now())
   product_variants    ProductVariants[]
@@ -44,7 +42,7 @@ model ProductVariants {
   variant_id String     @id @default(uuid())
   product_id String
   product    Products   @relation(fields: [product_id], references: [product_id], onDelete: Cascade)
-  size       String // S, M, L, XL, Custom
+  size       String
   color      String
   price_cents Int
   is_active  Boolean    @default(true)
@@ -59,13 +57,12 @@ model Inventory {
   updated_at   DateTime        @updatedAt
 }
 
-// --- THE CIRCULAR ENGINE (Phase 2) ---
 model DigitalTwins {
   twin_id        String   @id @default(uuid())
-  user_id        String
-  owner          Users    @relation(fields: [user_id], references: [user_id])
+  user_id        String?
+  owner          Users?   @relation(fields: [user_id], references: [user_id])
   variant_name   String
-  nfc_secure_tag String   @unique // Encrypted identifier sewn into physical hem
-  garment_status String   @default("active") // active, listed_resale, returned, shredded
+  nfc_secure_tag String   @unique
+  garment_status String   @default("active")
   minted_at      DateTime @default(now())
 }

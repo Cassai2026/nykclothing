@@ -19,12 +19,12 @@ const paymentRoutes = require('./routes/payments');
 const userRoutes = require('./routes/users');
 const twinRoutes = require('./routes/twins');
 const webhookRoutes = require('./routes/webhooks');
-const authRoutes = require('./routes/auth'); // Imported Authentication Engine
+const authRoutes = require('./routes/auth');
+const productRoutes = require('./routes/products'); // Mounted Catalog Router
 
 const app = express();
 const port = process.env.PORT || 3000;
 
-// --- HARDENED DEFENSE MIDDLEWARE ---
 app.use(helmet({
   contentSecurityPolicy: {
     directives: {
@@ -44,7 +44,7 @@ app.use(cors({
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
-      callback(new Error('CORS Policy violation: Request origin blocked.'));
+      callback(new Error('CORS Policy violation.'));
     }
   },
   credentials: true
@@ -52,7 +52,6 @@ app.use(cors({
 
 app.use(compression()); 
 
-// Stripe Webhook Router execution mapping
 app.use('/api/webhooks', webhookRoutes); 
 
 app.use(express.json());
@@ -61,7 +60,7 @@ app.use(express.static(path.join(__dirname, 'storefront')));
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, 
   max: 100, 
-  message: 'Rate limit exceeded. Request vector paused for 15 mins.'
+  message: 'Rate limit exceeded.'
 });
 app.use('/api/', apiLimiter);
 
@@ -69,7 +68,8 @@ app.use('/api/', apiLimiter);
 app.use('/api/payments', paymentRoutes); 
 app.use('/api/users', userRoutes);
 app.use('/api/twins', twinRoutes);
-app.use('/api/auth', authRoutes); // Mounted Authentication Gateway
+app.use('/api/auth', authRoutes);
+app.use('/api/products', productRoutes); // Integrated Custom Segmentation Layer
 
 app.get('/api/health', (req, res) => res.status(200).json({ status: 'Operational' }));
 
