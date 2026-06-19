@@ -18,7 +18,8 @@ REQUIRED_ENV.forEach((key) => {
 const paymentRoutes = require('./routes/payments'); 
 const userRoutes = require('./routes/users');
 const twinRoutes = require('./routes/twins');
-const webhookRoutes = require('./routes/webhooks'); // 1. Imported Webhook Route
+const webhookRoutes = require('./routes/webhooks');
+const authRoutes = require('./routes/auth'); // Imported Authentication Engine
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -51,8 +52,7 @@ app.use(cors({
 
 app.use(compression()); 
 
-// --- STRIPE WEBHOOK LAYER ---
-// Must sit ABOVE express.json() so the raw request body buffer is preserved for verification
+// Stripe Webhook Router execution mapping
 app.use('/api/webhooks', webhookRoutes); 
 
 app.use(express.json());
@@ -69,6 +69,7 @@ app.use('/api/', apiLimiter);
 app.use('/api/payments', paymentRoutes); 
 app.use('/api/users', userRoutes);
 app.use('/api/twins', twinRoutes);
+app.use('/api/auth', authRoutes); // Mounted Authentication Gateway
 
 app.get('/api/health', (req, res) => res.status(200).json({ status: 'Operational' }));
 
