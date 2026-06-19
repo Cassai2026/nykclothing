@@ -1,55 +1,98 @@
 const { PrismaClient } = require('@prisma/client');
+const crypto = require('crypto');
 const prisma = new PrismaClient();
 
+// Helper: Generate a secure scrypt hash for test credentials
+function hashPassword(password) {
+  const salt = crypto.randomBytes(16).toString('hex');
+  const derivedKey = crypto.scryptSync(password, salt, 64);
+  return `${salt}:${derivedKey.toString('hex')}`;
+}
+
 async function main() {
-  console.log('Clearing old catalog items...');
+  console.log('Resetting ecosystem database tables...');
+  await prisma.inventory.deleteMany({});
+  await prisma.productVariants.deleteMany({});
   await prisma.products.deleteMany({});
+  await prisma.users.deleteMany({});
 
-  console.log('Seeding NYK Clothing flagship inventory...');
+  console.log('Seeding simulated identity matrices...');
+  const masterPassword = hashPassword('NykTestPass123!');
 
-  // Create the core product silhouette
-  const hoodie = await prisma.products.create({
+  // 1. Provision Test Profiles for All Tiers
+  const standardUser = await prisma.users.create({
+    data: { email: 'buyer@nyk.local', password_hash: masterPassword, role: 'customer' }
+  });
+
+  const vipUser = await prisma.users.create({
+    data: { email: 'vip@nyk.local', password_hash: masterPassword, role: 'exclusive_vip' }
+  });
+
+  const adminUser = await prisma.users.create({
+    data: { email: 'admin@nyk.local', password_hash: masterPassword, role: 'admin' }
+  });
+
+  console.log('Seeding public and ghost vault product lines...');
+
+  // 2. Insert Standard Catalog Product
+  const publicHoodie = await prisma.products.create({
     data: {
       product_name: 'Sovereign Luxury Hoodie',
-      product_description: 'Heavyweight 450gsm organic cotton. Drop shoulder boxy silhouette. Encrypted NFC life-cycle tag sewn into the left hem.',
+      product_description: 'Heavyweight 450gsm organic cotton. Drop shoulder boxy silhouette.',
+      access_tier: 'standard',
       is_active: true,
     },
   });
 
-  // Define variants with standard high-end retail pricing (£85.00 -> 8500 cents)
-  const variantsData = [
-    { size: 'S', color: 'Matte Black', price_cents: 8500 },
-    { size: 'M', color: 'Matte Black', price_cents: 8500 },
-    { size: 'L', color: 'Matte Black', price_cents: 8500 },
-    { size: 'XL', color: 'Matte Black', price_cents: 8500 },
-  ];
+  // 3. Insert Ghost Vault Secret Product
+  const ghostJacket = await prisma.products.create({
+    data: {
+      product_name: 'Ghost Camo Matrix Shell',
+      product_description: '[CLASSIFIED] Ultra-limited technical outerwear with integrated dynamic thermal masking.',
+      access_tier: 'exclusive_vip',
+      is_active: true,
+    },
+  });
 
-  for (const variant of variantsData) {
-    const createdVariant = await prisma.productVariants.create({
+  // 4. Map Variants and Stock Levels
+  const sizes = ['S', 'M', 'L', 'XL'];
+
+  // Public Hoodie Variants
+  for (const size of sizes) {
+    const variant = await prisma.productVariants.create({
       data: {
-        product_id: hoodie.product_id,
-        size: variant.size,
-        color: variant.color,
-        price_cents: variant.price_cents,
-        is_active: true,
+        product_id: publicHoodie.product_id,
+        size,
+        color: 'Matte Black',
+        price_cents: 8500,
       },
     });
-
-    // Initialize physical inventory counts for each size variant
-    await prisma.inventory.create({
-      data: {
-        variant_id: createdVariant.variant_id,
-        quantity: 50, // Starting drop volume per size
-      },
-    });
+    await prisma.inventory.create({ data: { variant_id: variant.variant_id, quantity: 100 } });
   }
 
-  console.log('Database seeding completed successfully. Vault is packed.');
+  // Ghost Jacket Variants
+  for (const size of sizes) {
+    const variant = await prisma.productVariants.create({
+      data: {
+        product_id: ghostJacket.product_id,
+        size,
+        color: 'Phantom Stealth',
+        price_cents: 25000, // Premium tier pricing
+      },
+    });
+    await prisma.inventory.create({ data: { variant_id: variant.variant_id, quantity: 10 } });
+  }
+
+  console.log('\n=== VAULT INFRASTRUCTURE SEEDED ===');
+  console.log(`Standard Tester ID [${standardUser.user_id}] -> buyer@nyk.local`);
+  console.log(`VIP Tester ID      [${vipUser.user_id}] -> vip@nyk.local`);
+  console.log(`Admin Tester ID    [${adminUser.user_id}] -> admin@nyk.local`);
+  console.log('====================================');
 }
 
 main()
   .catch((e) => {
-    console.error('Seeding process aborted due to error:', e);
+    console.error('Seeding halted:', e);
     process.exit(1);
   })
   .finally(async () => {
