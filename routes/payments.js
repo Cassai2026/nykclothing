@@ -14,24 +14,28 @@ const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
 
 router.post('/create-checkout-session', validateData(checkoutSchema), async (req, res) => {
   try {
-    const { items } = req.body;
+    const { items, user_id } = req.body; // Capture user_id from client state
 
+    const metadataMap = {};
     const lineItems = await Promise.all(
-      items.map(async (clientItem) => {
+      items.map(async (clientItem, index) => {
         const dbVariant = await prisma.productVariants.findUnique({
           where: { variant_id: clientItem.variant_id },
           include: { product: true }
         });
 
         if (!dbVariant || !dbVariant.is_active || !dbVariant.product.is_active) {
-          throw new Error(\Product variant \ is unavailable or invalid.\);
+          throw new Error(`Product variant ${clientItem.variant_id} is unavailable.`);
         }
+
+        // Map index to variant_id and quantity for webhook extraction
+        metadataMap[`item_${index}`] = `${clientItem.variant_id}:${clientItem.quantity}`;
 
         return {
           price_data: {
             currency: 'gbp',
             product_data: {
-              name: \\ - \ / \\,
+              name: `${dbVariant.product.product_name} - ${dbVariant.size} / ${dbVariant.color}`,
             },
             unit_amount: dbVariant.price_cents,
           },
@@ -46,6 +50,10 @@ router.post('/create-checkout-session', validateData(checkoutSchema), async (req
       line_items: lineItems,
       success_url: process.env.FRONTEND_URL + '/success.html',
       cancel_url: process.env.FRONTEND_URL + '/index.html',
+      metadata: {
+        user_id: user_id || "guest_checkout_placeholder",
+        ...metadataMap
+      }
     });
 
     res.json({ url: session.url });
